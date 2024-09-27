@@ -1,0 +1,139 @@
+﻿@model List<EmployeeProject.Models.EmployeeDetails>
+
+@{
+    ViewBag.Title = "All Employees";
+}
+
+<div class="employee-page-container">
+    <h2>All Employees</h2>
+
+    <div class="employee-table-container">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>EmpId</th>
+                    <th>Profile</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Phone Number</th>
+                    <th>Address</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Companies</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Count > 0)
+                {
+                    foreach (var employee in Model)
+                    {
+                        <tr>
+                            <td>@employee.EmpId</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(employee.ProfilePhotoPath))
+                                {
+                                    <img src="@employee.ProfilePhotoPath" alt="Profile Photo" style="width: 50px; height: 50px; border-radius: 50%;" />
+                                }
+                                else
+                                {
+                                    <span>No Photo</span>
+                                }
+                            </td>
+                            <td>@employee.FirstName</td>
+                            <td>@employee.LastName</td>
+                            <td>@employee.PhoneNumber</td>
+                            <td>@employee.Address</td>
+                            <td>@employee.Email</td>
+                            <td>@employee.Role</td>
+                            <td>
+                                @if (employee.Companies != null && employee.Companies.Count > 0)
+                                {
+                                    <ul class="company-list">
+                                        @for (int i = 0; i < employee.Companies.Count; i++)
+                                        {
+                                            <li>@employee.Companies[i].CompanyName</li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <span>No Companies</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="9" class="text-center">No employees found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- CSS Styling -->
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(45deg, #49a09d, #5f2c82);
+    }
+
+    .employee-page-container {
+        background-color: rgba(20, 30, 48, 0.8);
+        padding: 30px;
+        border-radius: 8px;
+        color: white;
+        max-width: 1200px;
+        margin: auto;
+    }
+
+    .employee-table-container {
+        padding: 20px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table th, .table td {
+            padding: 15px;
+            text-align: left;
+            color: #fff;
+        }
+
+        .table th {
+            background-color: #55608f;
+            color: #ffffff;
+        }
+
+    .company-list {
+        list-style-type: disc;
+        padding-left: 20px;
+        margin-bottom: 0;
+    }
+
+        .company-list li {
+            color: white;
+            margin-bottom: 5px;
+        }
+
+    .text-center {
+        text-align: center;
+        color: white;
+    }
+
+    .employee-page-container h2 {
+        margin-bottom: 20px;
+        color: #ffffff;
+        text-align: center;
+    }
+</style>

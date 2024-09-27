@@ -1,0 +1,156 @@
+﻿@{
+    ViewData["Title"] = "Add User Details";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <script>
+        function addCompanyInput() {
+          
+            var newInput = document.createElement('input');
+            newInput.type = 'text';
+            newInput.name = 'Companies[]'; 
+            newInput.className = 'form-control transparent-input';
+            newInput.placeholder = 'Enter Company Name';           
+            document.getElementById('company-list').appendChild(newInput);
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #141e30; 
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+            .form-group i {
+                position: absolute;
+                left: 10px; 
+                color: rgba(255, 255, 255, 0.7); 
+                pointer-events: none; 
+            }
+
+        .transparent-input {
+            background-color: transparent; 
+            border: none; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5); 
+            color: white;
+            padding: 10px 10px 10px 30px; 
+            font-size: 16px; 
+            outline: none;
+            transition: none; 
+            width: 100%; 
+        }
+
+            .transparent-input:focus {
+                background-color: rgba(255, 255, 255, 0.1);
+                color: white !important; 
+            }
+
+        /* Button styling */
+        .btn-login {
+            background-color: #5a5d6f; 
+            color: white; 
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+
+            .btn-login:hover {
+                background-color: #3b3f53;
+            }
+
+        .btn-add {
+            margin-top: 10px;
+            background-color: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+            .btn-add:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+
+        .error-message {
+            color: red; 
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Add User Details</h2>
+        <form action="/Admin/AddUserDetails" method="post">
+            <div class="form-group">
+                <i class="fas fa-user"></i>
+                <input name="UserName" class="form-control transparent-input" placeholder="Username" required />
+            </div>
+            <div class="form-group">
+                <i class="fas fa-lock"></i>
+                <input name="Password" type="password" class="form-control transparent-input" placeholder="Password" required />
+            </div>
+            <div class="form-group">
+                <i class="fas fa-user"></i>
+                <input name="FirstName" class="form-control transparent-input" placeholder="First Name" required />
+            </div>
+            <div class="form-group">
+                <i class="fas fa-user"></i>
+                <input name="LastName" class="form-control transparent-input" placeholder="Last Name" required />
+            </div>
+            <div class="form-group">
+                <i class="fas fa-phone"></i>
+                <input name="PhoneNumber" type="tel" class="form-control transparent-input" placeholder="Phone Number" required pattern="[0-9]*" />
+            </div>
+            <div class="form-group">
+                <i class="fas fa-map-marker-alt"></i>
+                <input name="Address" class="form-control transparent-input" placeholder="Address" required />
+            </div>
+            <div class="form-group">
+                <i class="fas fa-envelope"></i>
+                <input name="Email" type="email" class="form-control transparent-input" placeholder="Email" required />
+            </div>
+
+            <div class="form-group">
+                <i class="fas fa-building"></i>
+                <div id="company-list">
+                    <input type="text" name="Companies[]" class="form-control transparent-input" placeholder="Enter Company Name" />
+                </div>
+                <button type="button" class="btn btn-add" onclick="addCompanyInput()">+ Add More Company</button>
+            </div>
+
+            <button type="submit" class="btn btn-login">Add User</button>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="error-message">@ViewData.ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage</div>
+            }
+        </form>
+    </div>
+</body>
+</html>

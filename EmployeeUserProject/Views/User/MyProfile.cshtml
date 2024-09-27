@@ -1,0 +1,212 @@
+﻿@model EmployeeProject.Models.UserProfile
+
+<div class="profile-container">
+    <h2>My Profile</h2>
+
+    <div class="profile-content">
+        <div class="profile-info">
+            <table class="table">
+                <tr>
+                    <th>First Name:</th>
+                    <td>@Model.FirstName</td>
+                </tr>
+                <tr>
+                    <th>Last Name:</th>
+                    <td>@Model.LastName</td>
+                </tr>
+                <tr>
+                    <th>Phone Number:</th>
+                    <td>@Model.PhoneNumber</td>
+                </tr>
+                <tr>
+                    <th>Address:</th>
+                    <td>@Model.Address</td>
+                </tr>
+                <tr>
+                    <th>Email:</th>
+                    <td>@Model.Email</td>
+                </tr>
+                <tr>
+                    <th>Companies:</th>
+                    <td>
+                        @if (Model.Companies != null && Model.Companies.Count > 0)
+                        {
+                            <table class="table inner-table">
+                                <tbody id="company-list">
+                                    @foreach (var company in Model.Companies)
+                                    {
+                                        <tr>
+                                            <td>@company</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <span>No companies found.</span>
+                        }
+                    </td>
+                </tr>
+            </table>
+
+            <button type="button" class="btn btn-add" onclick="toggleInput()">+ Add More Company</button>
+
+            <div id="company-inputs" style="display:none; margin-top: 10px;">
+                <input type="text" id="new-company" class="form-control transparent-input" placeholder="Enter Company Name" />
+                <br />
+                <button type="button" class="btn btn-add" onclick="addCompany()">Add Company</button>
+            </div>
+        </div>
+
+        <div class="profile-photo">
+            @if (!string.IsNullOrEmpty(Model.ProfilePhotoPath))
+            {
+                <img src="@Model.ProfilePhotoPath" alt="Profile Photo" class="profile-image" />
+            }
+            else
+            {
+                <span>No Profile Photo</span>
+            }
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    function toggleInput() {
+        $('#company-inputs').toggle(); // Toggle the visibility of the input box
+    }
+
+    function addCompany() {
+        const companyName = $('#new-company').val();
+
+        if (companyName) {
+            $.ajax({
+                url: '/User/AddCompany', // URL of the action method
+                type: 'POST',
+                data: { companyName: companyName }, // Data to be sent
+                success: function (response) {
+                    // Check if response has companyName
+                    if (response && response.companyName) {
+                        $('#company-list').append('<tr><td>' + response.companyName + '</td></tr>');
+                        $('#new-company').val(''); // Clear the input box
+                        $('#company-inputs').hide(); // Hide the input box after adding
+                    } else {
+                        alert('Error: Company name not received from server.');
+                    }
+                },
+                error: function () {
+                    alert('Error adding company. Please try again.');
+                }
+            });
+        } else {
+            alert('Please enter a company name.');
+        }
+    }
+</script>
+
+<style>
+    body {
+        background-color: #141e30;
+        color: white;
+        font-family: Arial, sans-serif;
+    }
+
+    .profile-container {
+        max-width: 800px; /* Increased width to accommodate profile photo */
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.5);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .profile-content {
+        display: flex; /* Use flexbox for layout */
+        justify-content: space-between; /* Space between the info and photo */
+    }
+
+    .profile-info {
+        flex: 1; /* Allow profile info to take available space */
+    }
+
+    .profile-photo {
+        width: 100px; /* Set a smaller width for the profile photo */
+        height: 100px; /* Set a fixed height */
+        margin-left: 20px; /* Add margin for spacing */
+        overflow: hidden; /* Hide overflow */
+        border-radius: 50%; /* Optional: Make it circular */
+    }
+
+    .profile-image {
+        width: 100%; /* Make image responsive to parent width */
+        height: auto; /* Maintain aspect ratio */
+    }
+
+    .table {
+        width: 100%;
+        margin-top: 20px;
+    }
+
+        .table th, .table td {
+            padding: 8px;
+            text-align: left;
+            color: white;
+        }
+
+        .table th {
+            background-color: transparent;
+            color: white;
+        }
+
+    .inner-table {
+        margin-top: 10px;
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .inner-table th, .inner-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+            color: white;
+        }
+
+        .inner-table th {
+            background-color: #5a5d6f;
+            color: white;
+        }
+
+    .btn-add {
+        background-color: #5a5d6f;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+    }
+
+        .btn-add:hover {
+            background-color: #3b3f53;
+        }
+
+    .transparent-input {
+        background-color: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+        color: white;
+        padding: 10px 10px 10px 30px;
+        font-size: 16px;
+        outline: none;
+        width: 100%;
+    }
+
+        .transparent-input:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white !important;
+        }
+</style>

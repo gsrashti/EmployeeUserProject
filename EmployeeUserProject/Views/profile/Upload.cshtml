@@ -1,0 +1,65 @@
+﻿@{
+    ViewBag.Title = "Upload Profile Photo";
+}
+
+<h2>Upload Profile Photo</h2>
+
+<div class="upload-photo-container">
+    <form asp-controller="Profile" asp-action="Upload" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="photo" class="form-label">Select Photo</label>
+            <input type="file" name="file" id="photo" class="form-control" accept="image/*" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Upload</button>
+    </form>
+
+    @if (ViewBag.Message != null)
+    {
+        <div class="alert alert-info mt-3">@ViewBag.Message</div>
+    }
+</div>
+
+<!-- CSS Styling -->
+<style>
+    body {
+        background: linear-gradient(45deg, #49a09d, #5f2c82);
+        color: white;
+        font-family: Arial, sans-serif;
+    }
+
+    .upload-photo-container {
+        background-color: rgba(20, 30, 48, 0.8);
+        padding: 30px;
+        border-radius: 8px;
+        max-width: 600px;
+        margin: 20px auto;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-label {
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3; 
+    }
+
+    .alert {
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 5px;
+    }
+</style>

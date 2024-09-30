@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Authentication;
 using System.Data;
 using Microsoft.AspNetCore.Http;
 using System.Data.SqlClient;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Drawing.Imaging;
+using System.Drawing;
 
 public class LoginController : Controller
 {
@@ -26,23 +29,56 @@ public class LoginController : Controller
 
     [HttpPost]
     public IActionResult Login(LoginViewModel model)
-    {
+        {
+        var sessionCaptcha = HttpContext.Session.GetString("CaptchaCode");
+
+        if (sessionCaptcha == null || !sessionCaptcha.Trim().Equals(model.UserCaptchaInput.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            ModelState.AddModelError(string.Empty, "Invalid CAPTCHA code.");
+            return View(model);
+        }
+
         if (ModelState.IsValid && IsValidUser(model.Username, model.Password, model.Role, out int userId, out int empId))
         {
             model.Id = userId;
             HttpContext.Session.SetString("UserRole", model.Role);
             HttpContext.Session.SetString("UserId", Convert.ToString(model.Id));
             HttpContext.Session.SetString("EmpId", Convert.ToString(empId));
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, model.Username),
-                new Claim(ClaimTypes.Role, model.Role),
-                new Claim("Id", model.Id.ToString())
-            };
 
+            // Create claims
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, model.Username),
+        new Claim(ClaimTypes.Role, model.Role),
+        new Claim("Id", model.Id.ToString())
+    };
+
+            // Create identity
             var claimsIdentity = new ClaimsIdentity(claims, "Login");
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = model.RememberMe,
+                ExpiresUtc = model.RememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddMinutes(20)
+            };           
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-            HttpContext.SignInAsync(claimsPrincipal).Wait();
+            HttpContext.SignInAsync("MyCookieAuth", claimsPrincipal, authProperties);
+            if (model.RememberMe)
+            {
+                var cookieOptions = new CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddDays(30), 
+                    HttpOnly = true, 
+                    Secure = false 
+                };
+     
+                Response.Cookies.Append("Username", model.Username, cookieOptions);              
+                Response.Cookies.Append("Password", model.Password, cookieOptions);
+            }
+            else
+            {
+                Response.Cookies.Delete("Username");
+                Response.Cookies.Delete("Password");
+            }
             return model.Role == "Admin" ? RedirectToAction("AllUsers", "Admin") : RedirectToAction("MyProfile", "User");
         }
 
@@ -74,23 +110,68 @@ public class LoginController : Controller
             {
                 if (reader.Read())
                 {
-                    userId = reader.GetInt32(0); 
-                    empId = reader.GetInt32(1);   
-                    return true;                  
+                    userId = reader.GetInt32(0);
+                    empId = reader.GetInt32(1);
+                    return true;
                 }
             }
         }
 
-        return false; 
+        return false;
+    }
+    private string GenerateRandomCode(int length = 6)
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        var random = new Random();
+        var code = new char[length];
+
+        for (int i = 0; i < length; i++)
+        {
+            code[i] = chars[random.Next(chars.Length)];
+        }
+
+        return new string(code);
     }
 
+    public IActionResult GenerateCaptcha()
+    {
+        var randomCode = GenerateRandomCode();
+        HttpContext.Session.SetString("CaptchaCode", randomCode);
+
+        using var bitmap = new Bitmap(200, 60);
+        using var graphics = Graphics.FromImage(bitmap);
+        Color backgroundColor = Color.FromArgb(240, 240, 240); 
+        graphics.Clear(backgroundColor); 
+        Random random = new Random();
+        using (var pen = new Pen(Color.LightGray, 2))
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                graphics.DrawLine(pen, 0, random.Next(0, 100), 200, random.Next(0, 100));
+            }
+        }
+
+        var font = new System.Drawing.Font("Arial", 20, FontStyle.Bold);
+        float xPos = 20; 
+
+        foreach (char c in randomCode)
+        {
+            graphics.DrawString(c.ToString(), font, Brushes.Black, new PointF(xPos, 30));
+            xPos += 25; 
+        }
+        using var memoryStream = new MemoryStream();
+        bitmap.Save(memoryStream, ImageFormat.Png);
+        memoryStream.Seek(0, SeekOrigin.Begin);
+
+        return File(memoryStream.ToArray(), "image/png");
+    }
     [HttpPost]
     public IActionResult Logout()
     {
         try
-        {            
+        {
             HttpContext.Session.Clear();
-             HttpContext.SignOutAsync();
+            HttpContext.SignOutAsync();
             return RedirectToAction("Login", "Login");
         }
         catch (Exception ex)

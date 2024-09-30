@@ -1,4 +1,10 @@
-﻿<!DOCTYPE html>
+﻿@model LoginViewModel
+@{
+    var username = Context.Request.Cookies["Username"] ?? string.Empty;
+    var password = Context.Request.Cookies["Password"] ?? string.Empty;
+    var isRememberMeChecked = !string.IsNullOrEmpty(username) ? "checked" : "";
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,10 +16,10 @@
         body {
             margin: 0;
             height: 100vh;
-            overflow: hidden; 
+            overflow: hidden;
             font-family: 'Arial', sans-serif;
             background: linear-gradient(#141e30, #243b55);
-            background-size: cover; 
+            background-size: cover;
             background-position: center;
         }
 
@@ -23,33 +29,33 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(#141e30, #243b55);            
-            z-index: -1; 
+            background: linear-gradient(#141e30, #243b55);
+            z-index: -1;
         }
 
         .transparent-input {
-            background-color: transparent; 
-            border: 1px solid rgba(255, 255, 255, 0.5); 
-            color: white !important;  
-            padding: 10px; 
-            border-radius: 5px; 
+            background-color: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: white !important;
+            padding: 10px;
+            border-radius: 5px;
             font-size: 16px;
-            outline: none; 
+            outline: none;
             border: none;
             transition: none;
             border-bottom: 1px solid rgba(255, 255, 255, 0.5);
         }
 
             .transparent-input::placeholder {
-                color: rgba(255, 255, 255, 0.7); 
+                color: rgba(255, 255, 255, 0.7);
             }
 
             .transparent-input:focus {
-                background: transparent; 
+                background: transparent;
                 border-bottom: 2px solid white;
                 color: white !important;
             }
-    
+
         .login-container {
             width: 100%;
             max-width: 400px;
@@ -57,50 +63,40 @@
             padding: 30px;
             border-radius: 10px;
             background: rgba(0, 0, 0, 0.5);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), 
-            0 16px 40px rgba(0, 0, 0, 0.3), 
-            0 24px 80px rgba(0, 0, 0, 0.4); 
-
-            transition: transform 0.3s, box-shadow 0.3s; 
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), 0 16px 40px rgba(0, 0, 0, 0.3), 0 24px 80px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
         }
 
             .login-container:hover {
-                transform: translateY(-5px); 
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 
-                0 20px 60px rgba(0, 0, 0, 0.35), 
-                0 30px 100px rgba(0, 0, 0, 0.45); 
+                transform: translateY(-5px);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 20px 60px rgba(0, 0, 0, 0.35), 0 30px 100px rgba(0, 0, 0, 0.45);
             }
-
 
             .login-container h2 {
                 text-align: center;
                 margin-bottom: 20px;
                 color: #007bff;
-                font-family: 'Georgia', serif; 
-            }
-
-            .login-container input {
-                background:transparent;
+                font-family: 'Georgia', serif;
             }
 
         .dropdown-icon select {
-            background-color: transparent;                  
-            color: white; 
-            
+            background-color: transparent;
+            color: white;
         }
 
             .dropdown-icon select option {
-                background-color: rgba(20, 30, 48, 0.9); 
-                color: white; 
+                background-color: rgba(20, 30, 48, 0.9);
+                color: white;
             }
+
         .form-group {
             position: relative;
         }
 
         .form-control {
             padding-left: 40px;
-            border: 1px solid #ced4da; 
-            transition: border-color 0.3s; 
+            border: 1px solid #ced4da;
+            transition: border-color 0.3s;
         }
 
             .form-control:focus {
@@ -109,7 +105,7 @@
             }
 
             .form-control:hover {
-                border-color: #0056b3; 
+                border-color: #0056b3;
             }
 
         .fa-user, .fa-lock, .fa-user-tag {
@@ -119,28 +115,72 @@
             color: #007bff;
         }
 
-       
         .btn-login {
             width: 100%;
             background-color: #007bff;
             color: white;
-            border: none; 
-            transition: background-color 0.3s, transform 0.3s; 
+            border: none;
+            transition: background-color 0.3s, transform 0.3s;
         }
 
             .btn-login:hover {
-                background-color: #0056b3; 
-                transform: translateY(-2px); 
+                background-color: #0056b3;
+                transform: translateY(-2px);
             }
+
+        /* Checkbox styles */
+        .remember-me {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 14px;
+            font-family: 'Arial', sans-serif;
+        }
+
+            .remember-me input[type="checkbox"] {
+                margin-right: 10px;
+                width: 18px;
+                height: 18px;
+                accent-color: #007bff;
+            }
+
+            .remember-me label {
+                margin-bottom: 0;
+                color: rgba(255, 255, 255, 0.7);
+                font-weight: normal;
+            }
+
+            .remember-me input[type="checkbox"]:checked + label {
+                color: white;
+            }
+
+        .captcha-label {
+            margin-right: 10px; /* Space between the label and image */
+            color: white; /* Label color */
+        }
+
+        .captcha-image {
+            width: 100px; /* Set the width of the CAPTCHA image */
+            height: auto; /* Maintain the aspect ratio */
+            border: 1px solid rgba(255, 255, 255, 0.5); /* Match input border */
+            border-radius: 5px; /* Rounded corners */
+            margin-right: 10px; /* Space between image and input */
+            background-color: rgba(0, 0, 0, 0.5)
+        }
+
+        .captcha-container {
+            display: flex;
+            align-items: center; /* Align items vertically center */
+            justify-content: space-between; /* Space between the image and input */
+            margin-top: 10px; /* Space above the CAPTCHA container */
+        }
+
 
         .error-message {
             color: red;
             text-align: center;
             margin-top: 10px;
         }
-
-       
-
     </style>
 </head>
 <body>
@@ -148,21 +188,19 @@
     <div class="login-container">
         <h2>Login</h2>
 
-        <form action="/Login/Login" method="post">
-            <!-- Update action URL as needed -->
-            <div class="form-group ">
+        <form id="loginForm" action="/Login/Login" method="post">
+            <div class="form-group">
                 <i class="fas fa-user"></i>
-                <input name="Username" class="form-control transparent-input" placeholder="Username" required />
-
+                <input name="Username" class="form-control transparent-input" placeholder="Username" required value="@username" />
             </div>
             <br />
 
             <div class="form-group">
                 <i class="fas fa-lock"></i>
-                <input name="Password" type="password" class="form-control transparent-input" placeholder="Password" required />
-
+                <input name="Password" type="password" class="form-control transparent-input" placeholder="Password" required value="@password" />
             </div>
             <br />
+
             <div class="form-group dropdown-icon">
                 <i class="fas fa-user-tag"></i>
                 <select name="Role" class="form-control transparent-input" required>
@@ -172,6 +210,19 @@
                 </select>
             </div>
             <br />
+
+            <div class="form-group remember-me">
+                <input type="hidden" name="RememberMe" value="false" />
+                <input type="checkbox" name="RememberMe" value="true" id="rememberMe" @isRememberMeChecked />
+                <label for="rememberMe">Remember Me</label>
+            </div>
+            <br />
+            <div class="form-group">
+                <label for="UserCaptchaInput" class="captcha-label">Enter CAPTCHA</label>
+                <img src="/Login/GenerateCaptcha" alt="CAPTCHA" class="captcha-image" />
+                <br />
+                <input type="text" name="UserCaptchaInput" class="form-control transparent-input" placeholder="Enter captcha" required />
+            </div>
             <br />
             <button type="submit" class="btn btn-login">Login</button>
 
@@ -184,5 +235,13 @@
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#loginForm').submit(function (event) {                
+                const rememberMeValue = $('#rememberMe').is(':checked');               
+                $('input[name="RememberMe"]').val(rememberMeValue);
+            });
+        });
+    </script>
 </body>
 </html>

@@ -85,38 +85,38 @@ namespace EmployeeProject.Controllers
         public IActionResult AddUserDetails() { return View(); }
 
         [HttpPost]
-        public IActionResult AddUserDetails(UserDetails model, List<string> Companies)
+        public IActionResult AddUserDetails(UserDetails model, List<string> Companies, IFormFile file)
         {
             // Define your connection string
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
-             
+
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                
                 connection.Open();
                 using (SqlTransaction transaction = connection.BeginTransaction())
                 {
                     try
                     {
+                        // Insert into Users table
                         string insertUserQuery = @"INSERT INTO Users (Username, Password, Role)
                                             OUTPUT INSERTED.Id
-                                            VALUES (@Username, @Password, @Role)"; 
-                        int userId; 
+                                            VALUES (@Username, @Password, @Role)";
+                        int userId;
 
                         using (SqlCommand cmd = new SqlCommand(insertUserQuery, connection, transaction))
                         {
                             cmd.Parameters.AddWithValue("@Username", model.UserName);
                             cmd.Parameters.AddWithValue("@Password", model.Password);
-                            cmd.Parameters.AddWithValue("@Role", "User"); 
+                            cmd.Parameters.AddWithValue("@Role", "User");
 
                             userId = (int)cmd.ExecuteScalar();
                         }
 
+                        // Insert into Employee table
                         string insertEmployeeQuery = @"INSERT INTO Employee (FirstName, LastName, PhoneNumber, Address, Email, UserId)
                                                 OUTPUT INSERTED.EmpId
                                                 VALUES (@FirstName, @LastName, @PhoneNumber, @Address, @Email, @UserId)";
-
-                        int empId; 
+                        int empId;
 
                         using (SqlCommand employeeCmd = new SqlCommand(insertEmployeeQuery, connection, transaction))
                         {
@@ -125,30 +125,60 @@ namespace EmployeeProject.Controllers
                             employeeCmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
                             employeeCmd.Parameters.AddWithValue("@Address", model.Address);
                             employeeCmd.Parameters.AddWithValue("@Email", model.Email);
-                            employeeCmd.Parameters.AddWithValue("@UserId", userId); 
+                            employeeCmd.Parameters.AddWithValue("@UserId", userId);
                             empId = (int)employeeCmd.ExecuteScalar();
                         }
 
-                       
+                        // Handle file upload
+                        string photoPath = null;
+                        if (file != null && file.Length > 0)
+                        {
+                            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/profiles");
+                            if (!Directory.Exists(uploadsFolder))
+                            {
+                                Directory.CreateDirectory(uploadsFolder);
+                            }
+
+                            var fileName = Path.GetFileName(file.FileName);
+                            photoPath = $"/images/profiles/{fileName}";
+                            var filePath = Path.Combine(uploadsFolder, fileName);
+
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                            {
+                                file.CopyTo(stream);
+                            }
+                        }
+
+                        // Insert into Companies table
                         string insertCompanyQuery = "INSERT INTO Companies (CompanyName, EmpId) VALUES (@CompanyName, @EmpId)";
                         foreach (var company in Companies)
                         {
                             using (SqlCommand companyCmd = new SqlCommand(insertCompanyQuery, connection, transaction))
                             {
                                 companyCmd.Parameters.AddWithValue("@CompanyName", company);
-                                companyCmd.Parameters.AddWithValue("@EmpId", empId); 
+                                companyCmd.Parameters.AddWithValue("@EmpId", empId);
                                 companyCmd.ExecuteNonQuery();
                             }
                         }
 
-                       
+                        // Insert into ProfileEMP table with the uploaded photo path
+                        if (!string.IsNullOrEmpty(photoPath))
+                        {
+                            string insertPhotoQuery = "INSERT INTO ProfileEMP (EmployeeId, PhotoPath) VALUES (@EmployeeId, @PhotoPath)";
+                            using (SqlCommand photoCmd = new SqlCommand(insertPhotoQuery, connection, transaction))
+                            {
+                                photoCmd.Parameters.AddWithValue("@EmployeeId", empId);
+                                photoCmd.Parameters.AddWithValue("@PhotoPath", photoPath);
+                                photoCmd.ExecuteNonQuery();
+                            }
+                        }
+
                         transaction.Commit();
                     }
                     catch (Exception ex)
                     {
-                        
                         transaction.Rollback();
-                        
+                        // Optionally log the error or handle it as needed
                         throw;
                     }
                 }
@@ -156,6 +186,80 @@ namespace EmployeeProject.Controllers
 
             return RedirectToAction("AllUsers");
         }
+
+
+        //[HttpPost]
+        //public IActionResult AddUserDetails(UserDetails model, List<string> Companies)
+        //{
+        //    // Define your connection string
+        //    string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+        //    using (SqlConnection connection = new SqlConnection(connectionString))
+        //    {
+
+        //        connection.Open();
+        //        using (SqlTransaction transaction = connection.BeginTransaction())
+        //        {
+        //            try
+        //            {
+        //                string insertUserQuery = @"INSERT INTO Users (Username, Password, Role)
+        //                                    OUTPUT INSERTED.Id
+        //                                    VALUES (@Username, @Password, @Role)"; 
+        //                int userId; 
+
+        //                using (SqlCommand cmd = new SqlCommand(insertUserQuery, connection, transaction))
+        //                {
+        //                    cmd.Parameters.AddWithValue("@Username", model.UserName);
+        //                    cmd.Parameters.AddWithValue("@Password", model.Password);
+        //                    cmd.Parameters.AddWithValue("@Role", "User"); 
+
+        //                    userId = (int)cmd.ExecuteScalar();
+        //                }
+
+        //                string insertEmployeeQuery = @"INSERT INTO Employee (FirstName, LastName, PhoneNumber, Address, Email, UserId)
+        //                                        OUTPUT INSERTED.EmpId
+        //                                        VALUES (@FirstName, @LastName, @PhoneNumber, @Address, @Email, @UserId)";
+
+        //                int empId; 
+
+        //                using (SqlCommand employeeCmd = new SqlCommand(insertEmployeeQuery, connection, transaction))
+        //                {
+        //                    employeeCmd.Parameters.AddWithValue("@FirstName", model.FirstName);
+        //                    employeeCmd.Parameters.AddWithValue("@LastName", model.LastName);
+        //                    employeeCmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
+        //                    employeeCmd.Parameters.AddWithValue("@Address", model.Address);
+        //                    employeeCmd.Parameters.AddWithValue("@Email", model.Email);
+        //                    employeeCmd.Parameters.AddWithValue("@UserId", userId); 
+        //                    empId = (int)employeeCmd.ExecuteScalar();
+        //                }
+
+
+        //                string insertCompanyQuery = "INSERT INTO Companies (CompanyName, EmpId) VALUES (@CompanyName, @EmpId)";
+        //                foreach (var company in Companies)
+        //                {
+        //                    using (SqlCommand companyCmd = new SqlCommand(insertCompanyQuery, connection, transaction))
+        //                    {
+        //                        companyCmd.Parameters.AddWithValue("@CompanyName", company);
+        //                        companyCmd.Parameters.AddWithValue("@EmpId", empId); 
+        //                        companyCmd.ExecuteNonQuery();
+        //                    }
+        //                }
+
+
+        //                transaction.Commit();
+        //            }
+        //            catch (Exception ex)
+        //            {
+
+        //                transaction.Rollback();
+
+        //                throw;
+        //            }
+        //        }
+        //    }
+
+        //    return RedirectToAction("AllUsers");
+        //}
 
 
     }

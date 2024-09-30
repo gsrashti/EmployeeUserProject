@@ -7,6 +7,8 @@ builder.Services.AddAuthentication("MyCookieAuth")
     {
         options.LoginPath = "/Login/Login";
         options.LogoutPath = "/Login/Logout";
+        options.ExpireTimeSpan = TimeSpan.FromDays(30);  
+        options.SlidingExpiration = true;
     });
 
 // Add session services

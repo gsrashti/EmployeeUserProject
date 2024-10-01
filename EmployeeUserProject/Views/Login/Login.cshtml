@@ -175,6 +175,37 @@
             margin-top: 10px; /* Space above the CAPTCHA container */
         }
 
+        .loader {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000; /* Make sure the loader is above everything */
+            font-size: 40px;
+            color: #007bff;
+            display: none; /* Initially hidden */
+        }
+
+        .blur {
+            filter: blur(5px); /* Apply blur effect */
+            pointer-events: none; /* Prevent interactions when blurred */
+        }
+
+
+        p.text-center {
+            color: white;
+        }
+
+            p.text-center a {
+                color: #007bff;
+                text-decoration: underline;
+                
+            }
+
+                p.text-center a:hover {
+                    color: #0056b3;
+                    text-decoration: none;
+                }
 
         .error-message {
             color: red;
@@ -230,18 +261,65 @@
             {
                 <div class="error-message">@ViewData.ModelState[""].Errors[0].ErrorMessage</div>
             }
+            <p class="text-center">
+                Don't have an account?
+                <a asp-action="SignIn" asp-controller="Login">Sign Up here</a>
+            </p>
         </form>
+
+        <div id="loader" class="loader">
+            <i class="fas fa-spinner fa-spin"></i> <!-- Loader Icon -->
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+   @*  <script>
         $(document).ready(function () {
             $('#loginForm').submit(function (event) {                
                 const rememberMeValue = $('#rememberMe').is(':checked');               
                 $('input[name="RememberMe"]').val(rememberMeValue);
             });
         });
+    </script> *@
+    <script>
+        $(document).ready(function () {
+            $('#loginForm').submit(function (event) {                
+                event.preventDefault();
+
+                const rememberMeValue = $('#rememberMe').is(':checked');
+                $('input[name="RememberMe"]').val(rememberMeValue);
+
+                // Show the loader 
+                showLoader();
+
+                // Simulate an asynchronous login request with a promise for 5 seconds delay
+                simulateLogin().then(function () {                   
+                    $('#loginForm')[0].submit();
+                });
+            });
+
+            function showLoader() {
+                $('#loader').css('display', 'flex'); 
+                $('body').addClass('blur'); 
+            }
+
+            function hideLoader() {
+                $('#loader').css('display', 'none'); 
+                $('body').removeClass('blur'); 
+            }
+
+            function simulateLogin() {
+                return new Promise(function (resolve) {
+                    
+                    setTimeout(function () {
+                        hideLoader(); 
+                        resolve();
+                    }, 5000); 
+                });
+            }
+        });
+
     </script>
 </body>
 </html>

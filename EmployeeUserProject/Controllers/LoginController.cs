@@ -11,6 +11,7 @@ using System.Data.SqlClient;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Drawing.Imaging;
 using System.Drawing;
+using EmployeeUserProject.Models;
 
 public class LoginController : Controller
 {
@@ -22,6 +23,55 @@ public class LoginController : Controller
     }
 
     [HttpGet]
+    public IActionResult SignIn()
+    {
+        return View();
+    }
+    [HttpPost]
+    public IActionResult SignIn(SignInModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+
+            return View(model);
+        }
+
+
+        using (SqlConnection conn = new SqlConnection(_connectionString))
+        {
+            conn.Open();
+            string checkUserQuery = "SELECT COUNT(1) FROM Users WHERE Username = @Username";
+            SqlCommand checkUserCmd = new SqlCommand(checkUserQuery, conn);
+            checkUserCmd.Parameters.AddWithValue("@Username", model.Username);
+
+            int userExists = (int)checkUserCmd.ExecuteScalar();
+
+            if (userExists > 0)
+            {
+                ModelState.AddModelError("", "User already exists with this username.");
+                return View(model);
+            }
+
+            string insertUserQuery = @"
+            INSERT INTO Users (Username, Password, Role) 
+            VALUES (@Username, @Password, @Role)";
+
+            SqlCommand insertUserCmd = new SqlCommand(insertUserQuery, conn);
+            insertUserCmd.Parameters.AddWithValue("@Username", model.Username);
+            insertUserCmd.Parameters.AddWithValue("@Password", model.Password);
+            insertUserCmd.Parameters.AddWithValue("@Role", model.Role);
+
+            insertUserCmd.ExecuteNonQuery();
+            ViewData["Success"] = true;
+            return View();
+
+        }
+        ModelState.AddModelError("", "An error occurred during registration.");
+        return View(model);
+    }
+
+
+    [HttpGet]
     public IActionResult Login()
     {
         return View(new LoginViewModel());
@@ -29,7 +79,7 @@ public class LoginController : Controller
 
     [HttpPost]
     public IActionResult Login(LoginViewModel model)
-        {
+    {
         var sessionCaptcha = HttpContext.Session.GetString("CaptchaCode");
 
         if (sessionCaptcha == null || !sessionCaptcha.Trim().Equals(model.UserCaptchaInput.Trim(), StringComparison.OrdinalIgnoreCase))
@@ -59,19 +109,19 @@ public class LoginController : Controller
             {
                 IsPersistent = model.RememberMe,
                 ExpiresUtc = model.RememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddMinutes(20)
-            };           
+            };
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
             HttpContext.SignInAsync("MyCookieAuth", claimsPrincipal, authProperties);
             if (model.RememberMe)
             {
                 var cookieOptions = new CookieOptions
                 {
-                    Expires = DateTimeOffset.UtcNow.AddDays(30), 
-                    HttpOnly = true, 
-                    Secure = false 
+                    Expires = DateTimeOffset.UtcNow.AddDays(30),
+                    HttpOnly = true,
+                    Secure = false
                 };
-     
-                Response.Cookies.Append("Username", model.Username, cookieOptions);              
+
+                Response.Cookies.Append("Username", model.Username, cookieOptions);
                 Response.Cookies.Append("Password", model.Password, cookieOptions);
             }
             else
@@ -87,7 +137,7 @@ public class LoginController : Controller
     }
 
     private bool IsValidUser(string username, string password, string role, out int userId, out int empId)
-    {
+        {
         userId = 0;
         empId = 0;
         using (var connection = new SqlConnection(_connectionString))
@@ -140,8 +190,8 @@ public class LoginController : Controller
 
         using var bitmap = new Bitmap(200, 60);
         using var graphics = Graphics.FromImage(bitmap);
-        Color backgroundColor = Color.FromArgb(240, 240, 240); 
-        graphics.Clear(backgroundColor); 
+        Color backgroundColor = Color.FromArgb(240, 240, 240);
+        graphics.Clear(backgroundColor);
         Random random = new Random();
         using (var pen = new Pen(Color.LightGray, 2))
         {
@@ -152,12 +202,12 @@ public class LoginController : Controller
         }
 
         var font = new System.Drawing.Font("Arial", 20, FontStyle.Bold);
-        float xPos = 20; 
+        float xPos = 20;
 
         foreach (char c in randomCode)
         {
             graphics.DrawString(c.ToString(), font, Brushes.Black, new PointF(xPos, 30));
-            xPos += 25; 
+            xPos += 25;
         }
         using var memoryStream = new MemoryStream();
         bitmap.Save(memoryStream, ImageFormat.Png);

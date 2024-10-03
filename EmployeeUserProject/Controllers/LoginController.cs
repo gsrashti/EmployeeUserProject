@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Drawing.Imaging;
 using System.Drawing;
 using EmployeeUserProject.Models;
+using System.Net.Mail;
+using System.Net;
 
 public class LoginController : Controller
 {
@@ -35,7 +37,7 @@ public class LoginController : Controller
 
             return View(model);
         }
-
+        
 
         using (SqlConnection conn = new SqlConnection(_connectionString))
         {
@@ -61,8 +63,21 @@ public class LoginController : Controller
             insertUserCmd.Parameters.AddWithValue("@Password", model.Password);
             insertUserCmd.Parameters.AddWithValue("@Role", model.Role);
 
-            insertUserCmd.ExecuteNonQuery();
+            //insertUserCmd.ExecuteNonQuery();
             ViewData["Success"] = true;
+
+            if (!string.IsNullOrEmpty(model.Email))
+            {
+                SendCredentials(model.Email);
+                ViewData["EmailSent"] = true;
+
+            }
+            else
+            {
+                ViewData["EmailSent"] = false;
+            }
+            HttpContext.Session.SetString("Username_Signed", model.Username);
+            HttpContext.Session.SetString("Password_Signed", model.Password);
             return View();
 
         }
@@ -137,7 +152,7 @@ public class LoginController : Controller
     }
 
     private bool IsValidUser(string username, string password, string role, out int userId, out int empId)
-        {
+    {
         userId = 0;
         empId = 0;
         using (var connection = new SqlConnection(_connectionString))
@@ -230,28 +245,97 @@ public class LoginController : Controller
         }
     }
 
-    //private bool IsValidUser(string username, string password, string role, out int userId)
-    //{
-    //    userId = 0; 
-    //    using (SqlConnection connection = new SqlConnection(_connectionString))
-    //    {
-    //        connection.Open();
-    //        string query = "SELECT Id FROM Users WHERE Username = @Username AND Password = @Password AND Role = @Role";
+    [HttpPost]
+    public IActionResult SendCredentials(string email)
+    {
+        if (string.IsNullOrEmpty(email))
+        {
+            return BadRequest("Email is required.");
+        }
 
-    //        using (SqlCommand command = new SqlCommand(query, connection))
-    //        {
-    //            command.Parameters.AddWithValue("@Username", username);
-    //            command.Parameters.AddWithValue("@Password", password); 
-    //            command.Parameters.AddWithValue("@Role", role);
-    //            var result = command.ExecuteScalar();
-    //            if (result != null)
-    //            {
-    //                userId = Convert.ToInt32(result); 
-    //                return true; 
-    //            }
-    //        }
-    //    }
+        // Retrieve credentials from the session
+        var username = "tset";
+        var password = "Test12";
 
-    //    return false; 
-    //}
+        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+        {
+            return NotFound("User not found in session.");
+        }
+
+        // Read the HTML template
+        string emailTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/templates/EmailTemplate.html");
+        string emailBody = System.IO.File.ReadAllText(emailTemplatePath);
+
+        // Replace placeholders with actual user credentials
+        emailBody = emailBody.Replace("{{Username}}", username);
+        emailBody = emailBody.Replace("{{Password}}", password);
+
+        // Send email
+        SendEmail(email, "Your Login Credentials", emailBody);
+
+        return Ok("Credentials sent.");
+    }
+
+    // SendEmail Method
+    private void SendEmail(string toEmail, string subject, string body)
+    {
+        try
+        {
+            using (var smtpClient = new SmtpClient("smtp.gmail.com", 587))
+            {
+                smtpClient.Credentials = new NetworkCredential("dishatest22@gmail.com", "cnfvdwkzfpdaruva"); // Use your App Password
+                smtpClient.EnableSsl = true;
+
+                using (var mailMessage = new MailMessage())
+                {
+                    mailMessage.From = new MailAddress("dishatest22@gmail.com");
+                    mailMessage.To.Add(toEmail);
+                    mailMessage.Subject = subject;
+                    mailMessage.Body = body;
+                    mailMessage.IsBodyHtml = true;
+
+                    smtpClient.Send(mailMessage);
+                }
+            }
+        }
+        catch (SmtpException ex)
+        {            
+            Console.WriteLine($"SMTP Exception: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+        }
+    }
+
+
+
+
 }
+
+
+//private bool IsValidUser(string username, string password, string role, out int userId)
+//{
+//    userId = 0; 
+//    using (SqlConnection connection = new SqlConnection(_connectionString))
+//    {
+//        connection.Open();
+//        string query = "SELECT Id FROM Users WHERE Username = @Username AND Password = @Password AND Role = @Role";
+
+//        using (SqlCommand command = new SqlCommand(query, connection))
+//        {
+//            command.Parameters.AddWithValue("@Username", username);
+//            command.Parameters.AddWithValue("@Password", password); 
+//            command.Parameters.AddWithValue("@Role", role);
+//            var result = command.ExecuteScalar();
+//            if (result != null)
+//            {
+//                userId = Convert.ToInt32(result); 
+//                return true; 
+//            }
+//        }
+//    }
+
+//    return false; 
+//}
+
